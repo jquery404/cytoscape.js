@@ -2147,6 +2147,22 @@ declare namespace cytoscape {
          */
         renderedBoundingBox(options?: BoundingBoxOptions): BoundingBox12 & BoundingBoxWH;
         renderedBoundingbox(options?: BoundingBoxOptions): BoundingBox12 & BoundingBoxWH;
+        /**
+         * Get the bounding polygon of the elements in model coordinates.
+         * Returns an array of points [{x, y}, ...] representing the polygon.
+         * 
+         * @returns Polygon in model coordinate space.
+         */
+        actualLabelBoundingBox(): BoundingBox12 & BoundingBoxWH;
+        actualLabelBoundingbox(): BoundingBox12 & BoundingBoxWH;
+        /**
+         * Get the bounding polygon of the elements in rendered coordinates.
+         * Returns an array of points [{x, y}, ...] representing the polygon.
+         * 
+         * @returns Polygon in rendered coordinate space.
+         */
+        renderedActualLabelBoundingBox(): BoundingBox12 & BoundingBoxWH;
+        renderedActualLabelBoundingbox(): BoundingBox12 & BoundingBoxWH;
     }
 
     /**

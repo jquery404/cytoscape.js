@@ -27,6 +27,22 @@ elesfn.renderedBoundingBox = function( options ){
   };
 };
 
+elesfn.renderedActualLabelBoundingBox = function(){
+  let polygon = this.actualLabelBoundingBox();
+  let cy = this.cy();
+  let zoom = cy.zoom();
+  let pan = cy.pan();
+
+  return polygon.map(p => ({
+    x: p.x * zoom + pan.x,
+    y: p.y * zoom + pan.y
+  }));
+};
+
+elesfn.actualLabelBoundingBox = function() {
+  return getRotatedLabelBox(this[0]);
+};
+
 elesfn.dirtyCompoundBoundsCache = function(silent = false){
   let cy = this.cy();
 
@@ -223,6 +239,68 @@ let updateBoundsFromBox = function( b, b2 ){
 let prefixedProperty = function( obj, field, prefix ){
   return getPrefixedProperty( obj, field, prefix );
 };
+
+let getRotatedLabelBox = function (ele, prefix) {
+  
+  if( ele.cy().headless() ){ return; }
+  
+  var _p = ele._private;
+  let cy = ele.cy();
+  var zoom = cy.zoom();
+  var th = 2 / zoom;
+
+  var prefixDash = prefix ? prefix + '-' : '';
+  let label = ele.pstyle( prefixDash + 'label' ).strValue;
+  if (!label) {
+    return null;
+  }
+  let bbPrefix = prefix || 'main';
+  let bbs = _p.labelBounds;
+  let bb = bbs[bbPrefix] = bbs[bbPrefix] || {};
+
+  // If the bounding box is not available, return null.
+  // This indicates that the label box cannot be calculated, which is consistent
+  // with the expected behavior of this function. Returning null allows the caller
+  // to handle the absence of a bounding box explicitly.
+  if (!bb) {
+    return null;
+  }
+
+  var lx = prefixedProperty(_p.rscratch, 'labelX', prefix);
+  var ly = prefixedProperty(_p.rscratch, 'labelY', prefix);
+  var theta = prefixedProperty(_p.rscratch, 'labelAngle', prefix);
+
+  var ox = ele.pstyle(prefixDash + 'text-margin-x').pfValue;
+  var oy = ele.pstyle(prefixDash + 'text-margin-y').pfValue;
+
+  var lx1 = bb.x1 - th - ox;
+  var lx2 = bb.x2 + th - ox;
+  var ly1 = bb.y1 - th - oy;
+  var ly2 = bb.y2 + th - oy;
+
+  if (theta) {
+    var cos = Math.cos(theta);
+    var sin = Math.sin(theta);
+
+    var rotate = function (x, y) {
+      x = x - lx;
+      y = y - ly;
+      return {
+        x: x * cos - y * sin + lx,
+        y: x * sin + y * cos + ly,
+      };
+    };
+
+    return [rotate(lx1, ly1), rotate(lx2, ly1), rotate(lx2, ly2), rotate(lx1, ly2)];
+  } else {
+    return [
+      { x: lx1, y: ly1 },
+      { x: lx2, y: ly1 },
+      { x: lx2, y: ly2 },
+      { x: lx1, y: ly2 },
+    ];
+  }
+}
 
 let updateBoundsFromArrow = function( bounds, ele, prefix ){
   if( ele.cy().headless() ){ return; }
@@ -947,6 +1025,7 @@ elesfn.boundingBox = function( options ){
   bounds.y2 = noninf( bounds.y2 );
   bounds.w = noninf( bounds.x2 - bounds.x1 );
   bounds.h = noninf( bounds.y2 - bounds.y1 );
+  
 
   return bounds;
 };
@@ -1032,5 +1111,7 @@ elesfn.boundingBoxAt = function( fn ){
 
 fn.boundingbox = fn.bb = fn.boundingBox;
 fn.renderedBoundingbox = fn.renderedBoundingBox;
+fn.actualLabelBoundingbox = fn.actualLabelBoundingBox;
+fn.renderedActualLabelBoundingbox = fn.renderedActualLabelBoundingBox;
 
 export default elesfn;

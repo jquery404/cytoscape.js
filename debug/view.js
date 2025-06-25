@@ -90,25 +90,77 @@
 		cy.panBy({ x: -1 });
 	});
 
-	var showBB = window.showBB = function( eles, opts ){
-		var bb = eles.renderedBoundingBox(opts);
+	var showBB = window.showBB = function(eles, opts) {
+		// var bb = eles.renderedBoundingBox(opts);
 
-		var $bb = $('#bb');
+		// var $bb = $('#bb');
 
-		var style = {
+		// var style = {
+		// 	left: bb.x1 + 'px',
+		// 	top: bb.y1 + 'px',
+		// 	width: (bb.x2 - bb.x1) + 'px',
+		// 	height: (bb.y2 - bb.y1) + 'px',
+		// 	display: 'block'
+		// };
+
+		// Object.keys( style ).forEach(function( key ){
+		// 	var val = style[key];
+
+		// 	$bb.style[ key ] = val;
+		// });
+
+		const bb = eles.renderedActualLabelBoundingbox();
+
+		const xs = bb.map(p => p.x);
+		const ys = bb.map(p => p.y);
+		bb.x1 = Math.min(...xs);
+		bb.y1 = Math.min(...ys);
+		bb.x2 = Math.max(...xs);
+		bb.y2 = Math.max(...ys);
+
+		// Get or create #bb div
+		let bbdiv = document.getElementById('bb');
+		if (!bbdiv) {
+			bbdiv = document.createElement('div');
+			bbdiv.id = 'bb';
+			document.body.appendChild(bbdiv);
+		}
+
+		// Style the #bb div
+		Object.assign(bbdiv.style, {
 			left: bb.x1 + 'px',
 			top: bb.y1 + 'px',
 			width: (bb.x2 - bb.x1) + 'px',
 			height: (bb.y2 - bb.y1) + 'px',
 			display: 'block'
-		};
-
-		Object.keys( style ).forEach(function( key ){
-			var val = style[key];
-
-			$bb.style[ key ] = val;
 		});
+
+		// Remove existing SVG if any
+		const existingSvg = bbdiv.querySelector('svg');
+		if (existingSvg) {
+			existingSvg.remove();
+		}
+
+		// Create SVG element
+		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		Object.assign(svg.style, {
+			position: 'absolute',
+			top: '0px',
+			left: '0px',
+			width: '100%',
+			height: '100%',
+			pointerEvents: 'none',
+			zIndex: 9999
+		});
+		const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+		polygon.setAttribute('points', bb.map(p => `${p.x - bb.x1},${p.y - bb.y1}`).join(' ')); 
+		polygon.setAttribute('fill', 'rgba(255, 0, 0, 0.1)');
+		polygon.setAttribute('stroke', 'red');
+		polygon.setAttribute('stroke-width', '1');
+		svg.appendChild(polygon);
+		bbdiv.appendChild(svg);
 	};
+
 
 	$("#show-bb").addEventListener('click', function(){
 		var eles = cy.$(':selected');
