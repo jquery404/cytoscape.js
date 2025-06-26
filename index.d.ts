@@ -2153,16 +2153,16 @@ declare namespace cytoscape {
          * 
          * @returns Polygon in model coordinate space.
          */
-        actualLabelBoundingBox(): BoundingBox12 & BoundingBoxWH;
-        actualLabelBoundingbox(): BoundingBox12 & BoundingBoxWH;
+        actualLabelBoundingBox(): PolygonBoundingBox;
+        actualLabelBoundingbox(): PolygonBoundingBox;
         /**
          * Get the bounding polygon of the elements in rendered coordinates.
          * Returns an array of points [{x, y}, ...] representing the polygon.
          * 
          * @returns Polygon in rendered coordinate space.
          */
-        renderedActualLabelBoundingBox(): BoundingBox12 & BoundingBoxWH;
-        renderedActualLabelBoundingbox(): BoundingBox12 & BoundingBoxWH;
+        renderedActualLabelBoundingBox(): PolygonBoundingBox;
+        renderedActualLabelBoundingbox(): PolygonBoundingBox;
     }
 
     /**
@@ -2967,6 +2967,33 @@ declare namespace cytoscape {
              */
             ele: SingularElementReturnValue;
         };
+        /**
+         * Returns a new collection containing nodes whose position lies inside
+         * the specified rectangular box in model coordinates.
+         * This is a spatial filter based on element positions.
+         *
+         * @param box BoundingBox12 & BoundingBoxWH
+         */
+        withinBox(box: BoundingBox12 & BoundingBoxWH): Collection<TIn>;
+
+        /**
+         * Returns a new collection containing nodes whose position lies inside
+         * the specified polygon in model coordinates.
+         * This is a spatial filter based on element positions.
+         *
+         * @param polygon Array of points {x, y} defining a polygon
+         */
+        withinPolygon(polygon: PolygonBoundingBox): Collection<TIn>;
+
+        /**
+         * Returns a new collection containing nodes whose polygonal bounds
+         * intersect the specified polygon in model coordinates.
+         * This is a spatial filter based on polygon-polygon intersection using SAT.
+         *
+         * @param polygon Array of points {x, y} defining a polygon
+         */
+        polygonIntersection(polygon: PolygonBoundingBox): Collection<TIn>;
+        
     }
 
     /**
@@ -6178,6 +6205,7 @@ declare namespace cytoscape {
         w: number;
         h: number;
     }
+    type PolygonBoundingBox = Position[];
     interface AnimatedLayoutOptions {
         // whether to transition the node positions
         animate?: boolean;
