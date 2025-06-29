@@ -40,7 +40,38 @@ elesfn.renderedActualLabelBoundingBox = function(){
 };
 
 elesfn.actualLabelBoundingBox = function() {
-  return getRotatedLabelBox(this[0]);
+  let bounds;
+
+  let isDirty = memoize(ele => {
+    let _p = ele._private;
+
+    return _p.labelPolygonCache == null || _p.styleDirty || _p.labelPolygonPosKey !== getLabelPolygonPosKey(ele);
+  }, ele => ele.id());
+
+  if (this.length === 1 && !isDirty(this[0])) {
+    bounds = this[0]._private.labelPolygonCache;
+  } else {
+    let eles = this;
+    let cy = eles.cy();
+    let styleEnabled = cy.styleEnabled();
+    this.edges().forEach(isDirty);
+    this.nodes().forEach(isDirty);
+
+    if(styleEnabled) {
+      this.recalculateRenderedStyle();
+    }
+
+    for (let i = 0; i < eles.length; i++) {
+      let ele = eles[i];
+      let _p = ele._private;
+      let polygon = getRotatedLabelBox(ele);
+      _p.labelPolygonCache = polygon;
+      _p.labelPolygonPosKey = getLabelPolygonPosKey(ele);
+      bounds = polygon;
+    }
+  }
+
+  return bounds;
 };
 
 elesfn.dirtyCompoundBoundsCache = function(silent = false){
@@ -248,6 +279,7 @@ let getRotatedLabelBox = function (ele, prefix) {
   let cy = ele.cy();
   var zoom = cy.zoom();
   var th = 2 / zoom;
+  ele.boundingBox({ includeLabels: true });
 
   var prefixDash = prefix ? prefix + '-' : '';
   let label = ele.pstyle( prefixDash + 'label' ).strValue;
@@ -265,7 +297,7 @@ let getRotatedLabelBox = function (ele, prefix) {
   if (!bb) {
     return null;
   }
-
+  
   var lx = prefixedProperty(_p.rscratch, 'labelX', prefix);
   var ly = prefixedProperty(_p.rscratch, 'labelY', prefix);
   var theta = prefixedProperty(_p.rscratch, 'labelAngle', prefix);
@@ -948,6 +980,18 @@ let cachedBoundingBoxImpl = function( ele, opts ){
   return bb;
 };
 
+let getLabelPolygonPosKey = function(ele) {
+  let pos = ele.position();
+  let angle = ele.pstyle('text-rotation').pfValue || 0;
+
+  return hashIntsArray([
+    Math.round(pos.x),
+    Math.round(pos.y),
+    Math.round(angle * 1000) 
+  ]);
+};
+
+
 let defBbOpts = {
   includeNodes: true,
   includeEdges: true,
@@ -1049,6 +1093,8 @@ elesfn.dirtyBoundingBoxCache = function(){
     _p.arrowBounds.target = null;
     _p.arrowBounds['mid-source'] = null;
     _p.arrowBounds['mid-target'] = null;
+    _p.labelPolygonCache = null;
+    _p.labelPolygonPosKey = null;
   }
 
   this.emitAndNotify('bounds');

@@ -2975,16 +2975,6 @@ declare namespace cytoscape {
          * @param box BoundingBox12 & BoundingBoxWH
          */
         withinBox(box: BoundingBox12 & BoundingBoxWH): Collection<TIn>;
-
-        /**
-         * Returns a new collection containing nodes whose position lies inside
-         * the specified polygon in model coordinates.
-         * This is a spatial filter based on element positions.
-         *
-         * @param polygon Array of points {x, y} defining a polygon
-         */
-        withinPolygon(polygon: PolygonBoundingBox): Collection<TIn>;
-
         /**
          * Returns a new collection containing nodes whose polygonal bounds
          * intersect the specified polygon in model coordinates.
@@ -2993,7 +2983,14 @@ declare namespace cytoscape {
          * @param polygon Array of points {x, y} defining a polygon
          */
         polygonIntersection(polygon: PolygonBoundingBox): Collection<TIn>;
-        
+        /**
+         * Returns a new collection containing nodes whose label polygon bounds
+         * contain the specified point (in model coordinates).
+         * This is useful for hit-testing clicks inside rendered labels.
+         *
+         * @param point The point in model coordinates {x, y}
+         */
+        labelsContainPoint(point: Position): Collection<TIn>;
     }
 
     /**

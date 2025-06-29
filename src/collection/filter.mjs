@@ -1,6 +1,6 @@
 import * as is from '../is.mjs';
 import Selector from '../selector/index.mjs';
-import { satPolygonIntersection, pointInsidePolygon } from '../math.mjs';
+import { satPolygonIntersection, pointInsidePolygon, pointInsidePolygonPoints } from '../math.mjs';
 
 let elesfn = ({
   nodes: function( selector ){
@@ -397,15 +397,24 @@ let elesfn = ({
     return this.spawn(filtered);
   },
 
-  withinPolygon: function(polygon) {
-    const eles = this.filter(':node');
+  labelsContainPoint: function(point) {
+    const nodes = this.nodes();
+    if (nodes.empty()) return this.spawn();
+
     const inside = [];
 
-    for (let i = 0; i < eles.length; i++) {
-      const ele = eles[i];
-      const pos = ele._private.position || ele.position(); 
+    for (let i = 0; i < nodes.length; i++) {
+      const ele = nodes[i];
+      const labelPoly = ele.actualLabelBoundingBox();
 
-      if (pointInsidePolygon(pos, polygon)) {
+      if (!labelPoly || labelPoly.length === 0) continue;
+      
+      const flatPoints = [];
+      for (let j = 0; j < labelPoly.length; j++) {
+        flatPoints.push(labelPoly[j].x, labelPoly[j].y);
+      }
+
+      if (pointInsidePolygonPoints(point.x, point.y, flatPoints)) {
         inside.push(ele);
       }
     }
@@ -414,11 +423,10 @@ let elesfn = ({
   },
 
   polygonIntersection: function(polygon) {
-    const eles = this.filter(':node');
     const matches = [];
 
-    for (let i = 0; i < eles.length; i++) {
-      const ele = eles[i];
+    for (let i = 0; i < this.length; i++) {
+      const ele = this[i];
 
       const elePoly = ele.actualLabelBoundingBox();
       if (!elePoly || !elePoly.length) continue;
